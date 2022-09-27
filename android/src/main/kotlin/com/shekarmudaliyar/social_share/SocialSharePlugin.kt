@@ -34,7 +34,8 @@ class SocialSharePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         )
     }
 
-    private fun shareInstagramStory(context: Context, call: MethodCall): Boolean {
+    private fun shareInstagramStory(activity: Activity, call: MethodCall): Boolean {
+        val context = activity.applicationContext
         val stickerImage: String? = call.argument("stickerImage")
         val backgroundImage: String? = call.argument("backgroundImage")
 
@@ -59,41 +60,40 @@ class SocialSharePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             Intent.FLAG_GRANT_READ_URI_PERMISSION
         )
         return if (context.packageManager.resolveActivity(intent, 0) != null) {
-            context.startActivity(intent)
+            activity.startActivity(intent)
             true
         } else {
             false
         }
     }
 
-    private fun shareInstagramFeed(context: Context, call: MethodCall): Boolean {
-        // Create the new Intent using the 'Send' action.
+    private fun shareInstagramFeed(activity: Activity, call: MethodCall): Boolean {
+        val context = activity.applicationContext
         val backgroundImage: String? = call.argument("imagePath")
-        //check if background image is also provided
         val backgroundImageFile = getImageUri(backgroundImage)
 
         val intent = Intent(Intent.ACTION_SEND)
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         intent.setPackage("com.instagram.android")
         intent.type = "image/*"
         intent.putExtra(Intent.EXTRA_STREAM, backgroundImageFile)
 
-        // Instantiate activity and verify it will resolve implicit intent
         context.grantUriPermission(
             "com.instagram.android",
             backgroundImageFile,
             Intent.FLAG_GRANT_READ_URI_PERMISSION
         )
-
         return if (context.packageManager.resolveActivity(intent, 0) != null) {
-            context.startActivity(intent)
+            activity.startActivity(intent)
             true
         } else {
             false
         }
     }
 
-    private fun shareFacebookStory(context: Context, call: MethodCall): Boolean {
+    private fun shareFacebookStory(activity: Activity, call: MethodCall): Boolean {
+        val context = activity.applicationContext
         val stickerImage: String? = call.argument("stickerImage")
         val backgroundTopColor: String? = call.argument("backgroundTopColor")
         val backgroundBottomColor: String? = call.argument("backgroundBottomColor")
@@ -117,14 +117,14 @@ class SocialSharePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             Intent.FLAG_GRANT_READ_URI_PERMISSION
         )
         return if (context.packageManager.resolveActivity(intent, 0) != null) {
-            context.startActivity(intent)
+            activity.startActivity(intent)
             true
         } else {
             false
         }
     }
 
-    private fun shareOptions(context: Context, call: MethodCall): Boolean {
+    private fun shareOptions(activity: Activity, call: MethodCall): Boolean {
         val content: String? = call.argument("content")
         val image: String? = call.argument("image")
         val intent = Intent()
@@ -146,61 +146,65 @@ class SocialSharePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         val chooserIntent: Intent = Intent.createChooser(intent, null /* dialog title optional */)
         chooserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
-        context.startActivity(chooserIntent)
+        activity.startActivity(chooserIntent)
         return true
     }
 
-    private fun shareWhatsapp(context: Context, call: MethodCall): Boolean {
+    private fun shareWhatsapp(activity: Activity, call: MethodCall): Boolean {
         val content: String? = call.argument("content")
         val whatsappIntent = Intent(Intent.ACTION_SEND)
+        whatsappIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         whatsappIntent.type = "text/plain"
         whatsappIntent.setPackage("com.whatsapp")
         whatsappIntent.putExtra(Intent.EXTRA_TEXT, content)
         return try {
-            context.startActivity(whatsappIntent)
+            activity.startActivity(whatsappIntent)
             true
         } catch (ex: ActivityNotFoundException) {
             false
         }
     }
 
-    private fun shareSms(context: Context, call: MethodCall): Boolean {
+    private fun shareSms(activity: Activity, call: MethodCall): Boolean {
         val content: String? = call.argument("message")
         val intent = Intent(Intent.ACTION_SENDTO)
         intent.addCategory(Intent.CATEGORY_DEFAULT)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         intent.setDataAndType(Uri.parse("sms:"), "vnd.android-dir/mms-sms")
         intent.putExtra("sms_body", content)
         return try {
-            context.startActivity(intent)
+            activity.startActivity(intent)
             true
         } catch (ex: ActivityNotFoundException) {
             false
         }
     }
 
-    private fun shareTwitter(context: Context, call: MethodCall): Boolean {
+    private fun shareTwitter(activity: Activity, call: MethodCall): Boolean {
         val text: String? = call.argument("captionText")
         val url: String? = call.argument("url")
         val trailingText: String? = call.argument("trailingText")
         val urlScheme = "http://www.twitter.com/intent/tweet?text=$text$url$trailingText"
         val intent = Intent(Intent.ACTION_VIEW)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         intent.data = Uri.parse(urlScheme)
         return try {
-            context.startActivity(intent)
+            activity.startActivity(intent)
             true
         } catch (ex: ActivityNotFoundException) {
             false
         }
     }
 
-    private fun shareTelegram(context: Context, call: MethodCall): Boolean {
+    private fun shareTelegram(activity: Activity, call: MethodCall): Boolean {
         val content: String? = call.argument("content")
         val telegramIntent = Intent(Intent.ACTION_SEND)
         telegramIntent.type = "text/plain"
         telegramIntent.setPackage("org.telegram.messenger")
+        telegramIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         telegramIntent.putExtra(Intent.EXTRA_TEXT, content)
         return try {
-            context.startActivity(telegramIntent)
+            activity.startActivity(telegramIntent)
             true
         } catch (ex: ActivityNotFoundException) {
             false
@@ -208,62 +212,62 @@ class SocialSharePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     }
 
     private fun checkInstalledApps(context: Context): Map<String, Boolean> {
+        val packageNames = mapOf(
+            "instagram" to "com.instagram.android",
+            "facebook" to "com.facebook.katana",
+            "twitter" to "com.twitter.android",
+            "whatsapp" to "com.whatsapp",
+            "telegram" to "org.telegram.messenger",
+        )
+
         val apps: MutableMap<String, Boolean> = mutableMapOf()
         val pm: PackageManager = context.packageManager
         val packages = pm.getInstalledApplications(PackageManager.GET_META_DATA)
+        packageNames.mapValuesTo(apps) { appEntry -> packages.any { it.packageName == appEntry.value } }
+
         //intent to check sms app exists
         val intent = Intent(Intent.ACTION_SENDTO).addCategory(Intent.CATEGORY_DEFAULT)
         intent.setDataAndType(Uri.parse("sms:"), "vnd.android-dir/mms-sms")
         val resolvedActivities: List<ResolveInfo> = pm.queryIntentActivities(intent, 0)
-        //if sms app exists
         apps["sms"] = resolvedActivities.isNotEmpty()
-        //if other app exists
-        apps["instagram"] =
-            packages.any { it.packageName.toString().contentEquals("com.instagram.android") }
-        apps["facebook"] =
-            packages.any { it.packageName.toString().contentEquals("com.facebook.katana") }
-        apps["twitter"] =
-            packages.any { it.packageName.toString().contentEquals("com.twitter.android") }
-        apps["whatsapp"] =
-            packages.any { it.packageName.toString().contentEquals("com.whatsapp") }
-        apps["telegram"] =
-            packages.any { it.packageName.toString().contentEquals("org.telegram.messenger") }
+
         return apps
     }
 
     override fun onMethodCall(call: MethodCall, result: Result) {
-        val context = activity?.applicationContext
-        if (context == null) {
+        val activity = activity
+        if (activity == null) {
             result.error("no_context", null, null)
             return
         }
+        val context = activity.applicationContext
         if (call.method == "checkInstalledApps") {
             result.success(checkInstalledApps(context))
         } else {
             val res = when (call.method) {
                 "shareInstagramStory" -> {
-                    shareInstagramStory(context, call)
+                    shareInstagramStory(activity, call)
                 }
                 "shareInstagramFeed" -> {
-                    shareInstagramFeed(context, call)
+                    shareInstagramFeed(activity, call)
                 }
                 "shareFacebookStory" -> {
-                    shareFacebookStory(context, call)
+                    shareFacebookStory(activity, call)
                 }
                 "shareWhatsapp" -> {
-                    shareWhatsapp(context, call)
+                    shareWhatsapp(activity, call)
                 }
                 "shareSms" -> {
-                    shareSms(context, call)
+                    shareSms(activity, call)
                 }
                 "shareTwitter" -> {
-                    shareTwitter(context, call)
+                    shareTwitter(activity, call)
                 }
                 "shareTelegram" -> {
-                    shareTelegram(context, call)
+                    shareTelegram(activity, call)
                 }
                 "shareOptions" -> {
-                    shareOptions(context, call)
+                    shareOptions(activity, call)
                 }
                 "copyToClipboard" -> {
                     val content: String? = call.argument("content")

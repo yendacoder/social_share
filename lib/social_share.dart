@@ -159,7 +159,7 @@ class SocialShare {
     return version;
   }
 
-  static Future<Map?> checkInstalledAppsForShare() async {
+  static Future<Map?> checkInstalledApps() async {
     final Map? apps = await _channel.invokeMethod('checkInstalledApps');
     return apps;
   }
@@ -169,9 +169,4 @@ class SocialShare {
     final String? version = await _channel.invokeMethod('shareTelegram', args);
     return version;
   }
-
-// static Future<String> shareSlack() async {
-//   final String version = await _channel.invokeMethod('shareSlack');
-//   return version;
-// }
 }
