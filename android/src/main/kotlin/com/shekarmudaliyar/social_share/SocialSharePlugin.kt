@@ -14,7 +14,6 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import java.io.File
-import java.lang.RuntimeException
 
 class SocialSharePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private lateinit var channel: MethodChannel
@@ -25,13 +24,26 @@ class SocialSharePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         channel.setMethodCallHandler(this)
     }
 
-    private fun getImageUri(imagePath: String?): Uri {
+    private fun getImageUri(imagePath: String?): Uri? {
+        if (imagePath == null) {
+            return null
+        }
         val context = activity?.applicationContext ?: throw RuntimeException("Context unavailable")
         return FileProvider.getUriForFile(
             context,
             context.packageName + ".com.shekarmudaliyar.social_share",
             File(imagePath)
         )
+    }
+
+    private fun getAppId(context: Context, call: MethodCall): String? {
+        val appIdOverride = call.argument<String?>("appId")
+        if (appIdOverride != null) {
+            return appIdOverride
+        }
+        val meta = context.packageManager
+            .getApplicationInfo(context.packageName, PackageManager.GET_META_DATA).metaData
+        return meta.getString("com.facebook.sdk.ApplicationId")
     }
 
     private fun shareInstagramStory(activity: Activity, call: MethodCall): Boolean {
@@ -49,7 +61,7 @@ class SocialSharePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             val backgroundImageFile = getImageUri(backgroundImage)
             intent.setDataAndType(backgroundImageFile, "image/*")
         }
-        intent.putExtra("source_application", call.argument<String?>("sourceApplication"))
+        intent.putExtra("source_application", getAppId(context, call))
         intent.putExtra("content_url", call.argument<String?>("attributionURL"))
         intent.putExtra("top_background_color", call.argument<String?>("backgroundTopColor"))
         intent.putExtra("bottom_background_color", call.argument<String?>("backgroundBottomColor"))
@@ -98,14 +110,13 @@ class SocialSharePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         val backgroundTopColor: String? = call.argument("backgroundTopColor")
         val backgroundBottomColor: String? = call.argument("backgroundBottomColor")
         val attributionURL: String? = call.argument("attributionURL")
-        val appId: String? = call.argument("appId")
 
         val stickerImageFile = getImageUri(stickerImage)
         val intent = Intent("com.facebook.stories.ADD_TO_STORY")
         intent.type = "image/*"
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        intent.putExtra("com.facebook.platform.extra.APPLICATION_ID", appId)
+        intent.putExtra("com.facebook.platform.extra.APPLICATION_ID", getAppId(context, call))
         intent.putExtra("interactive_asset_uri", stickerImageFile)
         intent.putExtra("content_url", attributionURL)
         intent.putExtra("top_background_color", backgroundTopColor)
@@ -273,8 +284,7 @@ class SocialSharePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     val content: String? = call.argument("content")
                     val clipboard =
                         context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                    val clip = ClipData.newPlainText("", content)
-                    clipboard.primaryClip = clip
+                    clipboard.setPrimaryClip(ClipData.newPlainText("", content))
                     true
                 }
                 else -> {

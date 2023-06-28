@@ -3,7 +3,7 @@ description: Demonstrates how to use the social_share plugin.
 publish_to: "none"
 
 environment:
-  sdk: ">=2.2.2 <3.0.0"
+  sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
   flutter:
@@ -12,8 +12,7 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.5
-  screenshot: ^1.2.3
-  path_provider: ^2.0.11
+  path_provider: ^2.0.15
   http:
   image_picker: ^0.8.5+3
 

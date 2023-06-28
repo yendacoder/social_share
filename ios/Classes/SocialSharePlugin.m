@@ -24,6 +24,13 @@
         NSString *backgroundBottomColor = call.arguments[@"backgroundBottomColor"];
         NSString *attributionURL = call.arguments[@"attributionURL"];
         NSString *backgroundImage = call.arguments[@"backgroundImage"];
+        NSString *appId = call.arguments[@"appId"];
+        if ([appId isKindOfClass:[NSNull class]]) {
+            NSString *path = [[NSBundle mainBundle] pathForResource:@"Info" ofType:@"plist"];
+            NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:path];
+            appId = [dict objectForKey:@"FacebookAppID"];
+        }
+        
         //getting image from file
         NSFileManager *fileManager = [NSFileManager defaultManager];
         BOOL isFileExist = [fileManager fileExistsAtPath: stickerImage];
@@ -43,7 +50,8 @@
              NSArray *pasteboardItems = @[@{@"com.instagram.sharedSticker.stickerImage" : imgShare,
                                             @"com.instagram.sharedSticker.backgroundTopColor" : backgroundTopColor,
                                             @"com.instagram.sharedSticker.backgroundBottomColor" : backgroundBottomColor,
-                                            @"com.instagram.sharedSticker.contentURL" : attributionURL
+                                            @"com.instagram.sharedSticker.contentURL" : attributionURL,
+                                            @"com.instagram.sharedSticker.appID" : appId
              }];
              if (@available(iOS 10.0, *)) {
              NSDictionary *pasteboardOptions = @{UIPasteboardOptionExpirationDate : [[NSDate date] dateByAddingTimeInterval:60 * 5]};
@@ -65,22 +73,23 @@
            if (isFileExist) {
                imgBackgroundShare = [[UIImage alloc] initWithContentsOfFile:backgroundImage];
            }
-               NSArray *pasteboardItems = @[@{@"com.instagram.sharedSticker.backgroundImage" : imgBackgroundShare,
+             NSArray *pasteboardItems = @[@{@"com.instagram.sharedSticker.backgroundImage" : imgBackgroundShare,
                                               @"com.instagram.sharedSticker.stickerImage" : imgShare,
                                               @"com.instagram.sharedSticker.backgroundTopColor" : backgroundTopColor,
                                               @"com.instagram.sharedSticker.backgroundBottomColor" : backgroundBottomColor,
-                                              @"com.instagram.sharedSticker.contentURL" : attributionURL
-                          }];
-                          if (@available(iOS 10.0, *)) {
-                          NSDictionary *pasteboardOptions = @{UIPasteboardOptionExpirationDate : [[NSDate date] dateByAddingTimeInterval:60 * 5]};
-                          // This call is iOS 10+, can use 'setItems' depending on what versions you support
-                          [[UIPasteboard generalPasteboard] setItems:pasteboardItems options:pasteboardOptions];
+                                              @"com.instagram.sharedSticker.contentURL" : attributionURL,
+                                              @"com.instagram.sharedSticker.appID" : appId
+             }];            
+             if (@available(iOS 10.0, *)) {
+               NSDictionary *pasteboardOptions = @{UIPasteboardOptionExpirationDate : [[NSDate date] dateByAddingTimeInterval:60 * 5]};
+               // This call is iOS 10+, can use 'setItems' depending on what versions you support
+               [[UIPasteboard generalPasteboard] setItems:pasteboardItems options:pasteboardOptions];
                               
-                            [[UIApplication sharedApplication] openURL:urlScheme options:@{} completionHandler:nil];
-                              result(@"sharing");
-                        } else {
-                            result(@"this only supports iOS 10+");
-                        }
+               [[UIApplication sharedApplication] openURL:urlScheme options:@{} completionHandler:nil];
+               result(@"sharing");
+             } else {
+               result(@"this only supports iOS 10+");
+             }
            }
        } else {
            result(@"not supported or no facebook installed");
@@ -115,7 +124,12 @@
         NSString *attributionURL = call.arguments[@"attributionURL"];
         NSString *path = [[NSBundle mainBundle] pathForResource:@"Info" ofType:@"plist"];
         NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:path];
-        NSString *appID = [dict objectForKey:@"FacebookAppID"];
+        NSString *appId = call.arguments[@"appId"];
+        if ([appId isKindOfClass:[NSNull class]]) {
+            NSString *path = [[NSBundle mainBundle] pathForResource:@"Info" ofType:@"plist"];
+            NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:path];
+            appId = [dict objectForKey:@"FacebookAppID"];
+        }
         NSFileManager *fileManager = [NSFileManager defaultManager];
         BOOL isFileExist = [fileManager fileExistsAtPath: stickerImage];
         UIImage *imgShare;

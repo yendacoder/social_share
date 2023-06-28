@@ -3,43 +3,45 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 
+enum InstalledApp {
+  instagram('instagram'),
+  facebook('facebook'),
+  twitter('twitter'),
+  whatsapp('whatsapp'),
+  telegram('telegram'),
+  sms('sms');
+
+  const InstalledApp(this.appName);
+
+  final String appName;
+}
+
 class SocialShare {
   static const MethodChannel _channel = const MethodChannel('social_share');
 
-  static Future<String?> shareInstagramStory(
-    String imagePath, {
+  static Future<String?> shareInstagramStory({
+    required String imagePath,
     String? backgroundTopColor,
     String? backgroundBottomColor,
     String? attributionURL,
-    String? sourceApplication,
     String? backgroundImagePath,
+    String? appId,
   }) async {
     Map<String, dynamic> args;
-    if (Platform.isIOS) {
-      args = <String, dynamic>{
-        "stickerImage": imagePath,
-        "backgroundTopColor": backgroundTopColor,
-        "backgroundBottomColor": backgroundBottomColor,
-        "attributionURL": attributionURL
-      };
-      if (backgroundImagePath != null) {
-        args["backgroundImage"] = backgroundImagePath;
-      }
-    } else {
-      args = <String, dynamic>{
-        "stickerImage": imagePath,
-        "backgroundImage": backgroundImagePath,
-        "backgroundTopColor": backgroundTopColor,
-        "backgroundBottomColor": backgroundBottomColor,
-        "attributionURL": attributionURL,
-        "sourceApplication": sourceApplication
-      };
+    args = <String, dynamic>{
+      "stickerImage": imagePath,
+      "backgroundTopColor": backgroundTopColor,
+      "backgroundBottomColor": backgroundBottomColor,
+      "attributionURL": attributionURL,
+      "appId": appId,
+    };
+    if (backgroundImagePath != null) {
+      args["backgroundImage"] = backgroundImagePath;
     }
-    final String? response = await _channel.invokeMethod(
+    return await _channel.invokeMethod(
       'shareInstagramStory',
       args,
     );
-    return response;
   }
 
   static Future<String?> shareInstagramFeed(String imagePath) async {
@@ -53,32 +55,31 @@ class SocialShare {
     return response;
   }
 
-  static Future<String?> shareFacebookStory(
-      String imagePath,
-      String backgroundTopColor,
-      String backgroundBottomColor,
-      String attributionURL,
-      {String? appId}) async {
+  /// [appId] is optional, if not set, the value set in
+  /// AndroidManifest/Info.plist will be used
+  static Future<String?> shareFacebookStory({
+    required String imagePath,
+    String? backgroundTopColor,
+    String? backgroundBottomColor,
+    String? attributionURL,
+    String? backgroundImagePath,
+    String? appId,
+  }) async {
     Map<String, dynamic> args;
-    if (Platform.isIOS) {
-      args = <String, dynamic>{
-        "stickerImage": imagePath,
-        "backgroundTopColor": backgroundTopColor,
-        "backgroundBottomColor": backgroundBottomColor,
-        "attributionURL": attributionURL,
-      };
-    } else {
-      args = <String, dynamic>{
-        "stickerImage": imagePath,
-        "backgroundTopColor": backgroundTopColor,
-        "backgroundBottomColor": backgroundBottomColor,
-        "attributionURL": attributionURL,
-        "appId": appId
-      };
+    args = <String, dynamic>{
+      "stickerImage": imagePath,
+      "backgroundTopColor": backgroundTopColor,
+      "backgroundBottomColor": backgroundBottomColor,
+      "attributionURL": attributionURL,
+      "appId": appId,
+    };
+    if (backgroundImagePath != null) {
+      args["backgroundImage"] = backgroundImagePath;
     }
-    final String? response =
-        await _channel.invokeMethod('shareFacebookStory', args);
-    return response;
+    return await _channel.invokeMethod(
+      'shareFacebookStory',
+      args,
+    );
   }
 
   static Future<String?> shareTwitter(String captionText,
@@ -159,9 +160,14 @@ class SocialShare {
     return version;
   }
 
-  static Future<Map?> checkInstalledApps() async {
+  static Future<Map<InstalledApp, bool>> checkInstalledApps() async {
     final Map? apps = await _channel.invokeMethod('checkInstalledApps');
-    return apps;
+    return Map.fromEntries(InstalledApp.values.map((app) =>
+        MapEntry<InstalledApp, bool>(
+            app,
+            apps?.entries.any((entry) =>
+                    entry.toString() == app.appName && entry.value == true) ==
+                true)));
   }
 
   static Future<String?> shareTelegram(String content) async {
