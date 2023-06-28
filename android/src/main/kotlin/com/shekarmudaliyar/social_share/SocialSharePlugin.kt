@@ -5,6 +5,7 @@ import android.content.*
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
 import android.net.Uri
+import android.util.Log
 import androidx.core.content.FileProvider
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
@@ -235,10 +236,8 @@ class SocialSharePlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         val pm: PackageManager = context.packageManager
         val packages = pm.getInstalledApplications(PackageManager.GET_META_DATA)
         packageNames.mapValuesTo(apps) { appEntry -> packages.any { it.packageName == appEntry.value } }
-
         //intent to check sms app exists
-        val intent = Intent(Intent.ACTION_SENDTO).addCategory(Intent.CATEGORY_DEFAULT)
-        intent.setDataAndType(Uri.parse("sms:"), "vnd.android-dir/mms-sms")
+        val intent = Intent(Intent.ACTION_SENDTO, Uri.parse("sms:")).addCategory(Intent.CATEGORY_DEFAULT)
         val resolvedActivities: List<ResolveInfo> = pm.queryIntentActivities(intent, 0)
         apps["sms"] = resolvedActivities.isNotEmpty()
 

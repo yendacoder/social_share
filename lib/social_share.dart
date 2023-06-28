@@ -166,7 +166,7 @@ class SocialShare {
         MapEntry<InstalledApp, bool>(
             app,
             apps?.entries.any((entry) =>
-                    entry.toString() == app.appName && entry.value == true) ==
+                    entry.key == app.appName && entry.value == true) ==
                 true)));
   }
 
