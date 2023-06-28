@@ -144,7 +144,7 @@
                                            @"com.facebook.sharedSticker.backgroundTopColor" : backgroundTopColor,
                                            @"com.facebook.sharedSticker.backgroundBottomColor" : backgroundBottomColor,
                                            @"com.facebook.sharedSticker.contentURL" : attributionURL,
-                                           @"com.facebook.sharedSticker.appID" : appID}];
+                                           @"com.facebook.sharedSticker.appID" : appId}];
             if (@available(iOS 10.0, *)) {
             NSDictionary *pasteboardOptions = @{UIPasteboardOptionExpirationDate : [[NSDate date] dateByAddingTimeInterval:60 * 5]};
             // This call is iOS 10+, can use 'setItems' depending on what versions you support
