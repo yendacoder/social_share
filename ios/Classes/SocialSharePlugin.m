@@ -40,7 +40,7 @@
           imgShare = [[UIImage alloc] initWithContentsOfFile:stickerImage];
         }
         //url Scheme for instagram story
-        NSURL *urlScheme = [NSURL URLWithString:@"instagram-stories://share"];
+        NSURL *urlScheme = [NSURL URLWithString:[NSString stringWithFormat:@"instagram-stories://share?source_application=%@", appId]];
         //adding data to send to instagram story
         if ([[UIApplication sharedApplication] canOpenURL:urlScheme]) {
            //if instagram is installed and the url can be opened
@@ -136,7 +136,7 @@
         if (isFileExist) {
            imgShare = [[UIImage alloc] initWithContentsOfFile:stickerImage];
         }
-        NSURL *urlScheme = [NSURL URLWithString:@"facebook-stories://share"];
+        NSURL *urlScheme = [NSURL URLWithString:[NSString stringWithFormat:@"facebook-stories://share?source_application=%@", appId]];
         if ([[UIApplication sharedApplication] canOpenURL:urlScheme]) {
 
             // Assign background image asset and attribution link URL to pasteboard
